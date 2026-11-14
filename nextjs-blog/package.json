@@ -1,0 +1,28 @@
+{
+  "name": "kanorio-nextjs-blog-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "types": "kanorio types --site $NEXT_PUBLIC_KANORIO_SITE_URL --out types/kanorio.d.ts",
+    "mock": "node mock/delivery.mjs"
+  },
+  "dependencies": {
+    "@kanorio/sdk": "^1.1.0",
+    "next": "16.4.5",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
+  },
+  "devDependencies": {
+    "@kanorio/cli": "^1.1.0",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5.9"
+  },
+  "engines": {
+    "node": ">=20.19 <22 || >=22.12"
+  }
+}

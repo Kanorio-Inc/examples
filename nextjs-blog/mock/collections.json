@@ -1,0 +1,303 @@
+[
+  {
+    "key": "blog_categories",
+    "displayName": "Blog categories",
+    "singularName": "Category",
+    "description": "Categories for blog posts. Managed from the Blog settings page.",
+    "kind": "system",
+    "titleFieldId": "name",
+    "fields": [
+      {
+        "id": "name",
+        "name": "Name",
+        "type": "text",
+        "required": true,
+        "max": 120
+      },
+      {
+        "id": "description",
+        "name": "Description",
+        "type": "rich_text",
+        "required": false,
+        "max": 2000
+      },
+      {
+        "id": "sort_order",
+        "name": "Sort order",
+        "type": "number",
+        "required": false,
+        "integer": true
+      },
+      {
+        "id": "counts",
+        "name": "Counts",
+        "type": "json",
+        "required": false,
+        "help": "{ posts: number } (published post count)"
+      },
+      {
+        "id": "seo",
+        "name": "SEO",
+        "type": "json",
+        "required": false,
+        "help": "title, description, ogImage, robots, canonical",
+        "tsType": "{ /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose: an asset id (look it up in `assets`) or a full URL. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: \"index\" | \"noindex\"; robotsFollow: \"follow\" | \"nofollow\"; twitterCard: \"summary\" | \"summary_large_image\"; /** Share image Kanorio generates from the title (a full URL); use it when ogImage is empty. */ autoOgImage: string | null; [key: string]: unknown; }"
+      }
+    ],
+    "virtualFields": [
+      {
+        "id": "counts",
+        "scope": "fieldData",
+        "tsType": "{ posts: number }",
+        "description": "Number of published posts in this category."
+      }
+    ],
+    "itemCount": 0,
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "key": "blog_tags",
+    "displayName": "Blog tags",
+    "singularName": "Tag",
+    "description": "Tags for blog posts. Managed from the Blog settings page.",
+    "kind": "system",
+    "titleFieldId": "name",
+    "fields": [
+      {
+        "id": "name",
+        "name": "Name",
+        "type": "text",
+        "required": true,
+        "max": 80
+      },
+      {
+        "id": "counts",
+        "name": "Counts",
+        "type": "json",
+        "required": false,
+        "help": "{ posts: number } (published post count)"
+      },
+      {
+        "id": "seo",
+        "name": "SEO",
+        "type": "json",
+        "required": false,
+        "tsType": "{ /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose: an asset id (look it up in `assets`) or a full URL. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: \"index\" | \"noindex\"; robotsFollow: \"follow\" | \"nofollow\"; twitterCard: \"summary\" | \"summary_large_image\"; /** Share image Kanorio generates from the title (a full URL); use it when ogImage is empty. */ autoOgImage: string | null; [key: string]: unknown; }"
+      }
+    ],
+    "virtualFields": [
+      {
+        "id": "counts",
+        "scope": "fieldData",
+        "tsType": "{ posts: number }",
+        "description": "Number of published posts with this tag."
+      }
+    ],
+    "itemCount": 0,
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "key": "authors",
+    "displayName": "Authors",
+    "singularName": "Author",
+    "description": "People who write posts or teach courses (deliverables). One shared list: blog posts reference them as authors, deliverables as instructors. Managed from the Blog settings page or a deliverable's settings.",
+    "kind": "system",
+    "titleFieldId": "name",
+    "fields": [
+      {
+        "id": "name",
+        "name": "Name",
+        "type": "text",
+        "required": true,
+        "max": 120
+      },
+      {
+        "id": "title",
+        "name": "Title",
+        "type": "text",
+        "required": false,
+        "max": 120,
+        "help": "Job title or credential shown next to the name, e.g. Head Chef"
+      },
+      {
+        "id": "avatar",
+        "name": "Avatar",
+        "type": "image",
+        "required": false
+      },
+      {
+        "id": "bio",
+        "name": "Bio",
+        "type": "rich_text",
+        "required": false,
+        "max": 2000
+      },
+      {
+        "id": "url",
+        "name": "Website",
+        "type": "url",
+        "required": false
+      },
+      {
+        "id": "counts",
+        "name": "Counts",
+        "type": "json",
+        "required": false,
+        "help": "{ posts: number } (published post count)"
+      },
+      {
+        "id": "seo",
+        "name": "SEO",
+        "type": "json",
+        "required": false,
+        "tsType": "{ /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose: an asset id (look it up in `assets`) or a full URL. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: \"index\" | \"noindex\"; robotsFollow: \"follow\" | \"nofollow\"; twitterCard: \"summary\" | \"summary_large_image\"; /** Share image Kanorio generates from the title (a full URL); use it when ogImage is empty. */ autoOgImage: string | null; [key: string]: unknown; }"
+      }
+    ],
+    "virtualFields": [
+      {
+        "id": "counts",
+        "scope": "fieldData",
+        "tsType": "{ posts: number }",
+        "description": "Number of published posts by this person. Courses they teach: GET /api/v1/products?author=<slug>."
+      }
+    ],
+    "itemCount": 0,
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "key": "blog",
+    "displayName": "Blog",
+    "singularName": "Post",
+    "description": "Blog posts. The full editor, categories, SEO and RSS settings live on the Blog page; this collection exposes the same data to the Content Delivery API and the collections API.",
+    "kind": "system",
+    "titleFieldId": "title",
+    "fields": [
+      {
+        "id": "title",
+        "name": "Title",
+        "type": "text",
+        "required": true,
+        "max": 200
+      },
+      {
+        "id": "excerpt",
+        "name": "Excerpt",
+        "type": "text",
+        "required": false,
+        "max": 1000
+      },
+      {
+        "id": "content",
+        "name": "Content",
+        "type": "rich_text",
+        "required": false
+      },
+      {
+        "id": "cover_image",
+        "name": "Cover image",
+        "type": "image",
+        "required": false
+      },
+      {
+        "id": "authors",
+        "name": "Authors",
+        "type": "multi_reference",
+        "required": false,
+        "targetCollectionKey": "authors"
+      },
+      {
+        "id": "categories",
+        "name": "Categories",
+        "type": "multi_reference",
+        "required": false,
+        "targetCollectionKey": "blog_categories"
+      },
+      {
+        "id": "tags",
+        "name": "Tags",
+        "type": "multi_reference",
+        "required": false,
+        "targetCollectionKey": "blog_tags"
+      },
+      {
+        "id": "reading_time_min",
+        "name": "Reading time (min)",
+        "type": "number",
+        "required": false,
+        "integer": true,
+        "min": 0
+      },
+      {
+        "id": "show_toc",
+        "name": "Show table of contents",
+        "type": "boolean",
+        "required": false,
+        "default": true
+      },
+      {
+        "id": "seo",
+        "name": "SEO",
+        "type": "json",
+        "required": false,
+        "help": "title, description, keywords, ogImage, ogTitle, ogDescription, canonical, robotsIndex, robotsFollow, twitterCard",
+        "tsType": "{ /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose: an asset id (look it up in `assets`) or a full URL. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: \"index\" | \"noindex\"; robotsFollow: \"follow\" | \"nofollow\"; twitterCard: \"summary\" | \"summary_large_image\"; /** Share image Kanorio generates from the title (a full URL); use it when ogImage is empty. */ autoOgImage: string | null; [key: string]: unknown; }"
+      }
+    ],
+    "virtualFields": [
+      {
+        "id": "primary_author",
+        "scope": "fieldData",
+        "tsType": "string | null",
+        "description": "Primary author item id (first entry of authors; also expanded in expanded.primary_author when ?expand=authors or ?expand=primary_author)."
+      },
+      {
+        "id": "primary_category",
+        "scope": "fieldData",
+        "tsType": "string | null",
+        "description": "Primary category item id (from primaryCategoryId or first entry of categories; also expanded in expanded.primary_category when ?expand=categories or ?expand=primary_category)."
+      },
+      {
+        "id": "segments",
+        "scope": "item",
+        "tsType": "Array<{ type: \"markdown\"; value: string } | { type: \"cta\"; config: { content: string; type: \"preset\" | \"custom\"; slug?: string; buttonText?: string; href?: string } } | { type: \"faq\"; config: { title?: string; items: Array<{ question: string; answer: string }> } } | { type: \"toggle\"; config: { title: string; content: string } } | { type: \"callout\"; config: { tone: \"info\" | \"warning\" | \"tip\" | \"danger\"; title?: string; content: string } } | { type: \"embed\"; config: { url: string; embedType: \"youtube\" | \"vimeo\" | \"google-maps\" | \"figma\" | \"codepen\" | \"generic\" } } | { type: \"gallery\"; config: { cols: 2 | 3 | 4; items: Array<{ src: string; alt: string }> } } | { type: \"audio\"; config: { src: string; title?: string } } | { type: \"pdf\"; config: { src: string; title?: string; pageCount?: number; thumbnailUrl?: string; assetId?: string; display?: \"preview\" | \"card\" } } | { type: \"file\"; config: { assetId: string; name: string; size?: number; mimeType?: string; url?: string | null } }>",
+        "description": "Portable content segments (markdown, cta, faq, toggle, callout, embed, gallery, audio, pdf, file) with asset:<id> references expanded."
+      },
+      {
+        "id": "primary_author",
+        "scope": "expanded",
+        "tsType": "",
+        "targetCollectionKey": "authors",
+        "description": "The primary author, expanded with ?expand=authors or ?expand=primary_author."
+      },
+      {
+        "id": "primary_category",
+        "scope": "expanded",
+        "tsType": "",
+        "targetCollectionKey": "blog_categories",
+        "description": "The primary category, expanded with ?expand=categories or ?expand=primary_category."
+      },
+      {
+        "id": "toc",
+        "scope": "item",
+        "tsType": "Array<{ id: string; label: string; level: 2 | 3 }>",
+        "description": "Table of contents built from H2/H3 headings; ids match the anchors in contentHtml."
+      },
+      {
+        "id": "contentHtml",
+        "scope": "item",
+        "tsType": "string",
+        "when": "formats includes html",
+        "description": "Semantic HTML rendering of the article body with kanorio-* classes."
+      },
+      {
+        "id": "plaintext",
+        "scope": "item",
+        "tsType": "string",
+        "when": "formats includes plaintext",
+        "description": "Plain-text rendering of the article body (for search indexes and excerpts)."
+      }
+    ],
+    "itemCount": 0,
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  }
+]

@@ -1,8 +1,10 @@
 // app/blog/[slug]/page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { image, seoMetadata } from "@kanorio/sdk";
+import { toNextMetadata } from "@kanorio/sdk/next";
 import { kanorio } from "@/lib/kanorio";
-import type { DeliveryAssetMap, KanorioCollectionsMap } from "@/types/kanorio";
+import type { KanorioCollectionsMap } from "@/types/kanorio";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -10,12 +12,6 @@ function loadPost(slug: string) {
   return kanorio<KanorioCollectionsMap["blog"]["single"]>(
     `/collections/blog/items/${encodeURIComponent(slug)}?expand=authors,categories&formats=html`
   );
-}
-
-// An image value is an asset id (look it up in `assets`) or a full URL
-function imageUrl(value: string | null | undefined, assets: DeliveryAssetMap) {
-  if (!value) return undefined;
-  return /^https?:\/\//.test(value) ? value : assets[value]?.url;
 }
 
 export async function generateStaticParams() {
@@ -26,14 +22,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const data = await loadPost((await params).slug);
   if (!data) return {};
-  const { seo, title, excerpt, cover_image } = data.item.fieldData;
-  const image = imageUrl(seo?.ogImage, data.assets) ?? imageUrl(seo?.autoOgImage, data.assets) ?? imageUrl(cover_image, data.assets);
-  return {
-    title: seo?.title ?? title,
-    description: seo?.description ?? excerpt ?? undefined,
-    alternates: { canonical: data.item.path },
-    openGraph: { images: image ? [image] : undefined },
-  };
+  // Title, description, canonical, robots and the share image, by the rules the hosted site uses.
+  // The share image is `fieldData.share_image`: Kanorio has picked it and cropped it the way the author framed it
+  return toNextMetadata(seoMetadata(data.item));
 }
 
 export default async function BlogPost({ params }: Params) {
@@ -41,11 +32,21 @@ export default async function BlogPost({ params }: Params) {
   if (!data) notFound();
 
   const { item, assets } = data;
-  const cover = item.fieldData.cover_image ? assets[item.fieldData.cover_image] : undefined;
+  // The cover is optional. It is an asset id: `assets` has its URL, size and alt text
+  const cover = image.resolve(item.fieldData.cover_image, assets);
   return (
     <article>
       <h1>{item.fieldData.title}</h1>
-      {cover && <img src={cover.url} alt={cover.alt ?? ""} width={cover.width ?? undefined} height={cover.height ?? undefined} />}
+      {cover && (
+        <img
+          src={image.url(cover.url, { width: 1200 })}
+          srcSet={image.srcSet(cover.url)}
+          sizes="(min-width: 800px) 768px, 100vw"
+          alt={cover.alt ?? ""}
+          width={cover.width ?? undefined}
+          height={cover.height ?? undefined}
+        />
+      )}
       {item.contentHtml && <div dangerouslySetInnerHTML={{ __html: item.contentHtml }} />}
     </article>
   );

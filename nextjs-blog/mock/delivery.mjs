@@ -11,9 +11,13 @@ import http from "node:http";
 const SITE_ID = "ws_example123";
 const collections = JSON.parse(readFileSync(new URL("./collections.json", import.meta.url), "utf8"));
 
-const asset = (assetId, file) => ({
+// Image URLs have the shape the real API gives: the last path segment is the variant (`public` is the original),
+// and replacing it with a size (`w=800,fit=scale-down`) asks the edge for that size
+const imageUrl = (assetId, variant = "public") => `https://img.kanorio.com/cdn-cgi/imagedelivery/example/${assetId}/${variant}`;
+
+const asset = (assetId) => ({
   assetId,
-  url: `https://img.example.com/${file}`,
+  url: imageUrl(assetId),
   width: 1600,
   height: 900,
   alt: null,
@@ -54,8 +58,8 @@ const posts = new Map([
       publishedAt: "2026-11-01T02:00:00.000Z",
       title: "First post",
       excerpt: "How the blog is wired.",
+      // the author picked a cover and a separate share image: both are asset ids, looked up in `assets`
       cover_image: "asset_cover",
-      // the author chose a share image: an asset id, looked up in `assets`
       seo: { ogImage: "asset_share" },
     },
   ],
@@ -67,14 +71,36 @@ const posts = new Map([
       publishedAt: "2026-11-02T02:00:00.000Z",
       title: "Second post",
       excerpt: null,
+      // no cover and no share image chosen: Kanorio generated a title card from the title (a full URL)
       cover_image: null,
-      // no share image chosen: Kanorio generated one from the title
-      seo: { autoOgImage: "https://img.example.com/auto-second-post.png" },
+      // the author also set their own canonical address and asked search engines not to index the post
+      seo: { autoOgImage: "https://img.example.com/auto-second-post.png", canonical: "https://www.example.com/guides/second", robotsIndex: "noindex" },
+    },
+  ],
+  [
+    "third-post",
+    {
+      id: "item_third",
+      slug: "third-post",
+      publishedAt: "2026-10-30T02:00:00.000Z",
+      title: "Third post",
+      excerpt: null,
+      // a cover only: with no share image chosen, the cover is the share image too
+      cover_image: "asset_cover",
+      seo: {},
     },
   ],
 ]);
 
-const ASSETS = { asset_cover: asset("asset_cover", "cover.webp"), asset_share: asset("asset_share", "share.webp") };
+const ASSETS = { asset_share: asset("asset_share"), asset_cover: { ...asset("asset_cover"), alt: "A desk with a laptop" } };
+
+// Like the real API, `share_image` is resolved on the server: the share image the author chose (cropped to 1200x630),
+// else the cover, else the title card Kanorio generated
+function shareImage(post) {
+  const chosen = post.seo.ogImage ?? post.cover_image;
+  if (chosen) return { url: imageUrl(chosen, "w=1200,h=630,fit=crop"), alt: ASSETS[chosen].alt };
+  return post.seo.autoOgImage ? { url: post.seo.autoOgImage, alt: null } : null;
+}
 
 function toItem(post, { full }) {
   return {
@@ -86,17 +112,19 @@ function toItem(post, { full }) {
     fieldData: {
       title: post.title,
       excerpt: post.excerpt,
+      // lists ask for these with `fields=title,excerpt,cover_image,share_image`
+      cover_image: post.cover_image,
+      share_image: shareImage(post),
+      // like the real API, the SEO title is the post's own title unless the author wrote another one
+      seo: seo({ title: post.title, description: post.excerpt, ...post.seo }),
       ...(full
         ? {
             content: `Hello from **${post.title}**.`,
-            cover_image: post.cover_image,
             authors: [],
             categories: [],
             tags: [],
             reading_time_min: 1,
             show_toc: false,
-            // like the real API, the SEO title is the post's own title unless the author wrote another one
-            seo: seo({ title: post.title, description: post.excerpt, ...post.seo }),
             primary_author: null,
             primary_category: null,
           }
@@ -143,7 +171,7 @@ const server = http.createServer((req, res) => {
   if (api === "/collections") return json(res, 200, { data: collections, hasMore: false, nextCursor: null }, [`site:${SITE_ID}`, "collections"]);
   if (api === "/collections/blog/items") {
     const data = [...posts.values()].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).map((post) => toItem(post, { full: false }));
-    return json(res, 200, { data, hasMore: false, nextCursor: null, assets: {} }, [`site:${SITE_ID}`, "collection:blog"]);
+    return json(res, 200, { data, hasMore: false, nextCursor: null, assets: ASSETS }, [`site:${SITE_ID}`, "collection:blog"]);
   }
   const single = api.match(/^\/collections\/blog\/items\/([^/]+)$/);
   if (single) {

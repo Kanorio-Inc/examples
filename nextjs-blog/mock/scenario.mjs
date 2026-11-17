@@ -92,12 +92,24 @@ try {
   check(first.status === 200 && text(first.html).includes("<h1>First post</h1>"), "the post page renders the post");
   check(text(first.html).includes("<title>First post | Example</title>"), "the title is the post's SEO title plus the layout's template");
   check(first.html.includes('rel="canonical" href="https://www.example.com/blog/first-post"'), "the canonical URL is the post's path on the site's own domain");
-  check(first.html.includes('property="og:image" content="https://img.example.com/share.webp"'), "the share image is the one the author chose (an asset id)");
-  check(first.html.includes('src="https://img.example.com/cover.webp"'), "the cover is resolved from the assets map");
+  const image = (assetId, variant) => `https://img.kanorio.com/cdn-cgi/imagedelivery/example/${assetId}/${variant}`;
+  check(first.html.includes(`property="og:image" content="${image("asset_share", "w=1200,h=630,fit=crop")}"`), "the share image is the one Kanorio resolved: the image the author chose, cropped");
+  const articleImg = first.html.match(/<article[\s\S]*?(<img[^>]*>)/)?.[1] ?? "";
+  check(articleImg.includes(`src="${image("asset_cover", "w=1200,fit=scale-down")}"`) && articleImg.includes('alt="A desk with a laptop"'), "the article page draws the cover the author picked, resized, with the asset's alt text");
+  check(articleImg.includes(`${image("asset_cover", "w=1600,fit=scale-down")} 1600w`), "the cover offers several widths in srcset");
   const second = await page("/blog/second-post");
-  check(second.html.includes('property="og:image" content="https://img.example.com/auto-second-post.png"'), "without a chosen share image, the generated one is used");
+  check(second.html.includes('property="og:image" content="https://img.example.com/auto-second-post.png"'), "without a share image or a cover, the generated title card is used");
+  check(!/<article[\s\S]*<img/.test(second.html), "a post without a cover draws no cover on the article page");
+  const third = await page("/blog/third-post");
+  check(third.html.includes(`property="og:image" content="${image("asset_cover", "w=1200,h=630,fit=crop")}"`), "without a chosen share image, the cover is the share image");
+  check(second.html.includes('rel="canonical" href="https://www.example.com/guides/second"'), "a canonical address the author set replaces the post's path");
+  check(/name="robots" content="noindex/.test(second.html), "noindex set by the author reaches the robots meta tag");
+  check(!/name="robots" content="noindex/.test(first.html), "a post without it stays indexable");
   const list = await page("/blog");
   check(list.html.includes('href="/blog/first-post"') && text(list.html).includes("Second post"), "the list links each post by its path");
+  check(list.html.includes(`src="${image("asset_cover", "w=800,fit=scale-down")}"`), "the list shows the cover (an asset id, resolved from the assets map) at card size");
+  check(!list.html.includes("asset_share"), "a post with a cover does not show its share image on the list");
+  check(list.html.includes('src="https://img.example.com/auto-second-post.png"'), "a post without a cover falls back to its share image (here the title card)");
   check((await page("/blog/missing")).status === 404, "an unknown slug is a 404");
 
   await page("/blog/first-post");

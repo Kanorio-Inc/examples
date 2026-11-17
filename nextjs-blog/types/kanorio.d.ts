@@ -237,6 +237,10 @@ export interface DeliveryFormSubmitBody {
 export interface DeliveryFormSubmitResponse {
   ok: true;
   state?: "closed" | "not_open" | "full";
+  /** Id of this submission; absent when state is present */
+  submissionId?: string;
+  /** Where to send the visitor now, when the form has a redirect after submit; answers are already filled in */
+  redirectUrl?: string;
 }
 
 // ---- /collections ----
@@ -248,9 +252,11 @@ export interface BlogCategoriesFieldData {
   description?: string | null;
   sort_order?: number | null;
   counts?: Record<string, unknown> | null;
-  seo?: { /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose: an asset id (look it up in `assets`) or a full URL. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: "index" | "noindex"; robotsFollow: "follow" | "nofollow"; twitterCard: "summary" | "summary_large_image"; /** Share image Kanorio generates from the title (a full URL); use it when ogImage is empty. */ autoOgImage: string | null; [key: string]: unknown; } | null;
+  seo?: { /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose, as stored: an asset id (look it up in `assets`) or a full URL. For `og:image` use `fieldData.share_image`, which is cropped and has the fallbacks applied. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: "index" | "noindex"; robotsFollow: "follow" | "nofollow"; twitterCard: "summary" | "summary_large_image"; /** Title card Kanorio generates from the title (a full URL). `fieldData.share_image` falls back to it. */ autoOgImage: string | null; [key: string]: unknown; } | null;
   /** Number of published posts in this category. */
   counts?: { posts: number };
+  /** The image to use as og:image, ready to use: the share image chosen for this page (cropped to 1200x630 the way it was framed), else the title card Kanorio generates. null when there is none. Same image the hosted site uses. */
+  share_image?: { url: string; alt: string | null } | null;
 }
 
 export interface BlogCategoriesExpanded {
@@ -262,9 +268,11 @@ export type BlogCategoriesItem = DeliveryItemEnvelope<BlogCategoriesFieldData, B
 export interface BlogTagsFieldData {
   name: string;
   counts?: Record<string, unknown> | null;
-  seo?: { /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose: an asset id (look it up in `assets`) or a full URL. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: "index" | "noindex"; robotsFollow: "follow" | "nofollow"; twitterCard: "summary" | "summary_large_image"; /** Share image Kanorio generates from the title (a full URL); use it when ogImage is empty. */ autoOgImage: string | null; [key: string]: unknown; } | null;
+  seo?: { /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose, as stored: an asset id (look it up in `assets`) or a full URL. For `og:image` use `fieldData.share_image`, which is cropped and has the fallbacks applied. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: "index" | "noindex"; robotsFollow: "follow" | "nofollow"; twitterCard: "summary" | "summary_large_image"; /** Title card Kanorio generates from the title (a full URL). `fieldData.share_image` falls back to it. */ autoOgImage: string | null; [key: string]: unknown; } | null;
   /** Number of published posts with this tag. */
   counts?: { posts: number };
+  /** The image to use as og:image, ready to use: the share image chosen for this page (cropped to 1200x630 the way it was framed), else the title card Kanorio generates. null when there is none. Same image the hosted site uses. */
+  share_image?: { url: string; alt: string | null } | null;
 }
 
 export interface BlogTagsExpanded {
@@ -283,9 +291,11 @@ export interface AuthorsFieldData {
   /** Absolute URL */
   url?: string | null;
   counts?: Record<string, unknown> | null;
-  seo?: { /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose: an asset id (look it up in `assets`) or a full URL. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: "index" | "noindex"; robotsFollow: "follow" | "nofollow"; twitterCard: "summary" | "summary_large_image"; /** Share image Kanorio generates from the title (a full URL); use it when ogImage is empty. */ autoOgImage: string | null; [key: string]: unknown; } | null;
+  seo?: { /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose, as stored: an asset id (look it up in `assets`) or a full URL. For `og:image` use `fieldData.share_image`, which is cropped and has the fallbacks applied. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: "index" | "noindex"; robotsFollow: "follow" | "nofollow"; twitterCard: "summary" | "summary_large_image"; /** Title card Kanorio generates from the title (a full URL). `fieldData.share_image` falls back to it. */ autoOgImage: string | null; [key: string]: unknown; } | null;
   /** Number of published posts by this person. Courses they teach: GET /api/v1/products?author=<slug>. */
   counts?: { posts: number };
+  /** The image to use as og:image, ready to use: the share image chosen for this page (cropped to 1200x630 the way it was framed), else the title card Kanorio generates. null when there is none. Same image the hosted site uses. */
+  share_image?: { url: string; alt: string | null } | null;
 }
 
 export interface AuthorsExpanded {
@@ -299,7 +309,7 @@ export interface BlogFieldData {
   excerpt?: string | null;
   /** Markdown */
   content?: string | null;
-  /** assetId — look it up in the top-level `assets` map */
+  /** The cover the author picked for this post: an asset id (look it up in `assets` for the URL, size, alt text and focus point), or null when the author did not pick one. It is never derived from the share image or the body. For `og:image` use `share_image`, which already falls back to this cover. */
   cover_image?: string | null;
   /** Referenced item ids — see `expanded` when `?expand=` is used */
   authors?: string[] | null;
@@ -309,11 +319,13 @@ export interface BlogFieldData {
   tags?: string[] | null;
   reading_time_min?: number | null;
   show_toc?: boolean | null;
-  seo?: { /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose: an asset id (look it up in `assets`) or a full URL. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: "index" | "noindex"; robotsFollow: "follow" | "nofollow"; twitterCard: "summary" | "summary_large_image"; /** Share image Kanorio generates from the title (a full URL); use it when ogImage is empty. */ autoOgImage: string | null; [key: string]: unknown; } | null;
+  seo?: { /** SEO title. Filled with the item's own title when the author left it empty; never includes the site name. */ title: string | null; description: string | null; keywords: string[] | null; /** Share image the author chose, as stored: an asset id (look it up in `assets`) or a full URL. For `og:image` use `fieldData.share_image`, which is cropped and has the fallbacks applied. */ ogImage: string | null; ogImageAlt: string | null; ogTitle: string | null; ogDescription: string | null; /** Canonical URL override, when the author set one. */ canonical: string | null; robotsIndex: "index" | "noindex"; robotsFollow: "follow" | "nofollow"; twitterCard: "summary" | "summary_large_image"; /** Title card Kanorio generates from the title (a full URL). `fieldData.share_image` falls back to it. */ autoOgImage: string | null; [key: string]: unknown; } | null;
   /** Primary author item id (first entry of authors; also expanded in expanded.primary_author when ?expand=authors or ?expand=primary_author). */
   primary_author?: string | null;
   /** Primary category item id (from primaryCategoryId or first entry of categories; also expanded in expanded.primary_category when ?expand=categories or ?expand=primary_category). */
   primary_category?: string | null;
+  /** The image to use as og:image, ready to use: the share image the author chose (cropped to 1200x630 the way they framed it), else the cover, else the title card Kanorio generates, else the first image in the body. null when the post has none. Same image the hosted site uses. alt is the alt text the author wrote for the share image, else the image's own alt text. */
+  share_image?: { url: string; alt: string | null } | null;
 }
 
 export interface BlogExpanded {

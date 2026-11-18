@@ -1,5 +1,6 @@
 // Builds this app, serves it against the mock Delivery API and checks what the guide promises:
-// reads are cached, a signed webhook refreshes the changed post, metadata comes from the post's SEO fields.
+// reads are cached, a signed webhook refreshes the changed post and brings in a post that was a 404 before it was published,
+// metadata comes from the post's SEO fields.
 // Usage (from the app folder, after npm install): node mock/scenario.mjs [--per-record]
 //   --per-record  also require that editing one post does not read the other post again
 //                 (true when cache tags come from the response, as in the Cache Components variant)
@@ -93,23 +94,31 @@ try {
   check(text(first.html).includes("<title>First post | Example</title>"), "the title is the post's SEO title plus the layout's template");
   check(first.html.includes('rel="canonical" href="https://www.example.com/blog/first-post"'), "the canonical URL is the post's path on the site's own domain");
   const image = (assetId, variant) => `https://img.kanorio.com/cdn-cgi/imagedelivery/example/${assetId}/${variant}`;
-  check(first.html.includes(`property="og:image" content="${image("asset_share", "w=1200,h=630,fit=crop")}"`), "the share image is the one Kanorio resolved: the image the author chose, cropped");
+  check(first.html.includes(`property="og:image" content="${image("asset_share", "w=1200,h=630,fit=crop,q=85")}"`), "the share image is the one Kanorio resolved: the image the author chose, cropped");
+  check(first.html.includes('property="og:image:width" content="1200"') && first.html.includes('property="og:image:height" content="630"'), "the share image's size reaches og:image:width and og:image:height");
   const articleImg = first.html.match(/<article[\s\S]*?(<img[^>]*>)/)?.[1] ?? "";
-  check(articleImg.includes(`src="${image("asset_cover", "w=1200,fit=scale-down")}"`) && articleImg.includes('alt="A desk with a laptop"'), "the article page draws the cover the author picked, resized, with the asset's alt text");
-  check(articleImg.includes(`${image("asset_cover", "w=1600,fit=scale-down")} 1600w`), "the cover offers several widths in srcset");
+  check(articleImg.includes(`${image("asset_cover", "w=1200,fit=scale-down")} 1200w`) && articleImg.includes('alt="A desk with a laptop"'), "the article page draws the cover the author picked, resized by Kanorio, with the asset's alt text");
+  check(articleImg.includes(`${image("asset_cover", "w=640,fit=scale-down")} 640w`) && !articleImg.includes("/_next/image"), "next/image asks Kanorio for each width in srcset, without resizing the image again");
+  check(articleImg.includes("data:image/svg+xml"), "the cover shows its blurred preview while it loads");
   const second = await page("/blog/second-post");
   check(second.html.includes('property="og:image" content="https://img.example.com/auto-second-post.png"'), "without a share image or a cover, the generated title card is used");
   check(!/<article[\s\S]*<img/.test(second.html), "a post without a cover draws no cover on the article page");
+  const logoImg = (await page("/blog/logo-post")).html.match(/<article[\s\S]*?(<img[^>]*>)/)?.[1] ?? "";
+  check(logoImg.includes('src="https://media.kanorio.com/example/logo.svg"') && !logoImg.includes("srcset"), "a cover without a known size (an SVG) is drawn as a plain <img>, as it is");
+  check(logoImg.includes('sizes="(min-width: 800px) 768px, 100vw"') && logoImg.includes("height:auto"), "the plain <img> keeps the attributes and style the page gave");
   const third = await page("/blog/third-post");
-  check(third.html.includes(`property="og:image" content="${image("asset_cover", "w=1200,h=630,fit=crop")}"`), "without a chosen share image, the cover is the share image");
+  check(third.html.includes(`property="og:image" content="${image("asset_cover", "w=1200,h=630,fit=crop,q=85")}"`), "without a chosen share image, the cover is the share image");
   check(second.html.includes('rel="canonical" href="https://www.example.com/guides/second"'), "a canonical address the author set replaces the post's path");
   check(/name="robots" content="noindex/.test(second.html), "noindex set by the author reaches the robots meta tag");
   check(!/name="robots" content="noindex/.test(first.html), "a post without it stays indexable");
   const list = await page("/blog");
   check(list.html.includes('href="/blog/first-post"') && text(list.html).includes("Second post"), "the list links each post by its path");
-  check(list.html.includes(`src="${image("asset_cover", "w=800,fit=scale-down")}"`), "the list shows the cover (an asset id, resolved from the assets map) at card size");
+  const listImg = list.html.match(/<img[^>]*asset_cover[^>]*>/)?.[0] ?? "";
+  check(listImg.includes(`${image("asset_cover", "w=640,fit=scale-down")} 640w`), "the list shows the cover (an asset id, resolved from the assets map) at card sizes");
+  check(listImg.includes("object-fit:cover") && listImg.includes("object-position:20% 40%"), "the card crops the cover around the focal point the owner set");
+  check(/<img[^>]*src="https:\/\/media\.kanorio\.com\/example\/logo\.svg"/.test(list.html), "the list shows a cover Kanorio cannot resize as it is");
   check(!list.html.includes("asset_share"), "a post with a cover does not show its share image on the list");
-  check(list.html.includes('src="https://img.example.com/auto-second-post.png"'), "a post without a cover falls back to its share image (here the title card)");
+  check(!list.html.includes("auto-second-post.png") && text(list.html).includes("Second post"), "a post without a cover whose share image is the title card shows its title alone on the list");
   check((await page("/blog/missing")).status === 404, "an unknown slug is a 404");
 
   await page("/blog/first-post");
@@ -151,6 +160,26 @@ try {
   const secondReads = await itemHits("second-post");
   if (perRecord) check(secondReads === 1, "the other post was not read again (tags came from the response)");
   else console.log(`  – the other post was read ${secondReads} time(s): single items share the collection tag in this setup`);
+
+  console.log("Publishing a post");
+  // A visitor opens a post before it is published (a link shared early): the front end caches the 404
+  check((await page("/blog/fourth-post")).status === 404, "a post that is not published yet is a 404");
+  await fetch(`${mock}/__mock/posts/fourth-post/publish`, { method: "POST" });
+  const publishBody = JSON.stringify({
+    version: "1",
+    id: "delivery_example_publish",
+    event: "collections.item.published",
+    data: { cacheTags: eventCacheTags.itemChanged({ collectionKey: "blog", itemId: "item_fourth" }) },
+  });
+  const publishSigned = { "content-type": "application/json", "x-kanorio-signature": await buildWebhookSignatureHeader(SECRET, publishBody, Math.floor(Date.now() / 1000)) };
+  check((await fetch(`${app}/api/revalidate`, { method: "POST", headers: publishSigned, body: publishBody })).status === 200, "the revalidate route accepts the publish event");
+  let appeared = false;
+  for (let attempt = 0; attempt < 10 && !appeared; attempt++) {
+    const res = await page("/blog/fourth-post");
+    appeared = res.status === 200 && text(res.html).includes("<h1>Fourth post</h1>");
+    if (!appeared) await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  check(appeared, "after the publish webhook, a post visited before it was published shows up");
 } catch (error) {
   failures.push(String(error?.message ?? error));
   console.error(error);

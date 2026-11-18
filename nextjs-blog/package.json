@@ -10,13 +10,13 @@
     "mock": "node mock/delivery.mjs"
   },
   "dependencies": {
-    "@kanorio/sdk": "^1.1.0",
+    "@kanorio/sdk": "^1.2.0",
     "next": "16.4.5",
     "react": "^19.2.1",
     "react-dom": "^19.2.1"
   },
   "devDependencies": {
-    "@kanorio/cli": "^1.1.0",
+    "@kanorio/cli": "^1.2.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

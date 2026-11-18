@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { image, seoMetadata } from "@kanorio/sdk";
 import { toNextMetadata } from "@kanorio/sdk/next";
+import { KanorioImage } from "@/components/kanorio-image";
 import { kanorio } from "@/lib/kanorio";
 import type { KanorioCollectionsMap } from "@/types/kanorio";
 
@@ -32,21 +33,12 @@ export default async function BlogPost({ params }: Params) {
   if (!data) notFound();
 
   const { item, assets } = data;
-  // The cover is optional. It is an asset id: `assets` has its URL, size and alt text
+  // The cover is optional. It is an asset id: `assets` has its URL, size, alt text and blurred preview
   const cover = image.resolve(item.fieldData.cover_image, assets);
   return (
     <article>
       <h1>{item.fieldData.title}</h1>
-      {cover && (
-        <img
-          src={image.url(cover.url, { width: 1200 })}
-          srcSet={image.srcSet(cover.url)}
-          sizes="(min-width: 800px) 768px, 100vw"
-          alt={cover.alt ?? ""}
-          width={cover.width ?? undefined}
-          height={cover.height ?? undefined}
-        />
-      )}
+      {cover && <KanorioImage image={cover} sizes="(min-width: 800px) 768px, 100vw" style={{ width: "100%", height: "auto" }} />}
       {item.contentHtml && <div dangerouslySetInnerHTML={{ __html: item.contentHtml }} />}
     </article>
   );

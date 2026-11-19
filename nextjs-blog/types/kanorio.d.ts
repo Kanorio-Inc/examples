@@ -56,10 +56,18 @@ export interface DeliveryItemEnvelope<TFieldData, TExpanded = Record<string, unk
   /** Alt text written for an image where this item uses it (image and gallery fields that `fieldData` includes) */
   imageAlt: ImageAltMap;
   expanded?: TExpanded;
-  /** Multilingual sites: the locale this item was served in (the requested locale when a translation exists, otherwise the primary locale) */
+  /**
+   * Multilingual sites: the locale this item was served in (the requested locale when at least one field has a translation,
+   * otherwise the primary locale). Fields fall back one by one: check `fieldLocales` for a particular field
+   */
   resolvedLocale?: string;
   /** Multilingual sites: secondary locales that have a published translation of this item */
   availableLocales?: string[];
+  /**
+   * Multilingual sites: the locale each translatable field was served in, keyed by its path in `fieldData` (`content`,
+   * `seo.title`). A field without a translation shows the primary locale. json, image and gallery fields are never machine-translated
+   */
+  fieldLocales?: Record<string, string>;
   /** Multilingual sites: the slug in every live locale */
   localeSlugs?: Record<string, string>;
   /**

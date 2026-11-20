@@ -9,7 +9,7 @@ Working front ends for [Kanorio](https://kanorio.com), one per folder. Each one 
 ## Start from an example
 
 ```bash
-npx create-next-app@latest my-site --example "https://github.com/Kanorio-Inc/examples/tree/main/nextjs-blog"
+npx create-next-app@latest my-site --example "https://github.com/kanorio/examples/tree/main/nextjs-blog"
 ```
 
 Then follow the README in the folder. Every example also runs without a Kanorio site, against a small mock of the Content Delivery API that ships with it.
